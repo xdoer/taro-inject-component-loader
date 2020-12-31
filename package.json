@@ -1,0 +1,58 @@
+{
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "private": true,
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
+  },
+  "peerDependencies": {},
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "name": "taro-inject-component-loader",
+  "author": "Thomas Trainset",
+  "module": "dist/taro-inject-component-loader.esm.js",
+  "size-limit": [
+    {
+      "path": "dist/taro-inject-component-loader.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/taro-inject-component-loader.esm.js",
+      "limit": "10 KB"
+    }
+  ],
+  "devDependencies": {
+    "@size-limit/preset-small-lib": "^4.9.1",
+    "husky": "^4.3.6",
+    "size-limit": "^4.9.1",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.0.3",
+    "typescript": "^4.1.3",
+    "@types/loader-utils": "^2.0.1",
+    "loader-utils": "^2.0.0"
+  }
+}
