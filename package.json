@@ -10,6 +10,18 @@
   "engines": {
     "node": ">=10"
   },
+  "homepage": "https://github.com/LuckyHH/taro-inject-component-loader",
+  "bugs": {
+    "url": "https://github.com/LuckyHH/taro-inject-component-loader/issues",
+    "email": "gotoanything@foxmail.com"
+  },
+  "keywords": [
+    "taro",
+    "react",
+    "loader",
+    "webpack",
+    "inject"
+  ],
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
