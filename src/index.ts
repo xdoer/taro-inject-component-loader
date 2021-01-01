@@ -3,12 +3,28 @@ import traverse from '@babel/traverse'
 import utils from '@babel/types'
 import { parse } from '@babel/parser'
 import { getOptions } from 'loader-utils'
+import { validate } from 'schema-utils';
+
+const schema = {
+  type: 'object',
+  properties: {
+    'IMPORT_SPECIFIER': {
+      type: 'string'
+    },
+    'COMPONENT_NAME': {
+      type: 'string'
+    }
+  }
+}
 
 export default function (source: string, map: any) {
   // @ts-ignore
   const webpackEnv = this
 
   const options = getOptions(webpackEnv)
+
+  validate(schema as any, options, { name: 'taro-inject-component-loader' })
+
   const { IMPORT_SPECIFIER = '', COMPONENT_NAME = '' } = options || {}
 
   // get current file path
