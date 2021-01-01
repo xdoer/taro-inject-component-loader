@@ -49,7 +49,7 @@ const config = {
               test: /\.tsx$/,
               use: [
                 {
-                  loader: path.resolve(__dirname, '../../../dist'),
+                  loader: 'taro-inject-component-loader',
                   options: {
                     IMPORT_SPECIFIER: '@components/BaseComponent',
                     COMPONENT_NAME: 'BaseComponent',
