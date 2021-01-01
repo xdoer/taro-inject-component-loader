@@ -14,7 +14,8 @@ const schema = {
     'COMPONENT_NAME': {
       type: 'string'
     }
-  }
+  },
+  additionalProperties: false
 }
 
 export default function (source: string, map: any) {
