@@ -14,7 +14,9 @@
 
 ## 使用
 
-将本仓库拉到本地，安装后运行 **npm build** 命令，然后将 **dist** 文件夹拷贝到你的项目里，在 **config/index.js** 配一下就好了。
+~~将本仓库拉到本地，安装后运行 **npm build** 命令，然后将 **dist** 文件夹拷贝到你的项目里，在 **config/index.js** 配一下就好了。~~
+
+直接 `npm install taro-inject-component-loader -D` 即可。
 
 配置示例:
 
@@ -27,7 +29,8 @@
             test: /\.tsx$/,
             use: [
               {
-                loader: path.resolve(__dirname, '../../../dist'), // loader 路径
+                // loader: path.resolve(__dirname, '../../../dist'), // loader 路径
+                loader: 'taro-inject-component-loader',
                 options: {
                   IMPORT_SPECIFIER: '@components/BaseComponent',  // 导入标识符
                   COMPONENT_NAME: 'BaseComponent',  // 导入组件名
