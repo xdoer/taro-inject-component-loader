@@ -33,7 +33,7 @@ export default function (source: string, map: any) {
   const [filePath] = sources
 
   // is page
-  const isPage = /(package-\w+\/)?pages\/\w+\/index\.tsx$/.test(filePath)
+  const isPage = /(package-.+\/)?pages\/.+\/index\.tsx$/.test(filePath)
 
   if (isPage) {
 
