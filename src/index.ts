@@ -3,22 +3,25 @@ import traverse from '@babel/traverse'
 import utils from '@babel/types'
 import { parse } from '@babel/parser'
 import { getOptions } from 'loader-utils'
-import { validate } from 'schema-utils';
+import { validate } from 'schema-utils'
 
 const schema = {
   type: 'object',
   properties: {
-    'IMPORT_SPECIFIER': {
-      type: 'string'
+    importSpecifier: {
+      type: 'string',
     },
-    'COMPONENT_NAME': {
-      type: 'string'
-    }
+    componentName: {
+      type: 'string',
+    },
+    isPage: {
+      instanceof: 'Function',
+    },
   },
-  additionalProperties: false
+  additionalProperties: false,
 }
 
-export default function (source: string, map: any) {
+export default function(source: string) {
   // @ts-ignore
   const webpackEnv = this
 
@@ -26,75 +29,74 @@ export default function (source: string, map: any) {
 
   validate(schema as any, options, { name: 'taro-inject-component-loader' })
 
-  const { IMPORT_SPECIFIER = '', COMPONENT_NAME = '' } = options || {}
+  const { importSpecifier = '', componentName = '', isPage = defaultJudgePage } = options || {}
 
-  // get current file path
-  const { sources = [] } = map || {}
-  const [filePath] = sources
+  // 获取原始文件地址
+  const filePath = webpackEnv.resourcePath
 
-  // is page
-  const isPage = /(package-.+\/)?pages\/.+\/index\.tsx$/.test(filePath)
-
-  if (isPage) {
-
-    // generate ast
+  if (typeof isPage === 'function' && isPage(filePath)) {
+    // 生成 AST
     const ast: any = parse(source, {
       sourceType: 'module',
       plugins: ['jsx', 'typescript', 'classProperties'],
     })
 
-    // page has insert component
+    /**
+     * 如果有导入申明，则默认表示已手动导入了组件
+     */
     let insert = false
 
     traverse(ast, {
       ImportDeclaration(path: any) {
-        if (path.node?.source?.value === IMPORT_SPECIFIER) {
+        if (path.node?.source?.value === importSpecifier) {
           insert = true
         }
-      }
+      },
     })
 
     if (!insert) {
-      let importedDeclaration = false
-      let importedComponent = false
+      // 记录组件插入状态
+      const state = {
+        importedDeclaration: false,
+        importedComponent: false,
+      }
 
       traverse(ast, {
-        // add import declaration
+        // 添加申明
         ImportDeclaration(path: any) {
-          if (!importedDeclaration) {
-            importedDeclaration = true
+          if (!state.importedDeclaration) {
+            state.importedDeclaration = true
             path.insertBefore(
               utils.importDeclaration(
-                [utils.importSpecifier(utils.identifier('' + COMPONENT_NAME), utils.identifier('' + COMPONENT_NAME))],
-                utils.stringLiteral('' + IMPORT_SPECIFIER)
-              )
+                [
+                  utils.importSpecifier(
+                    utils.identifier('' + componentName),
+                    utils.identifier('' + componentName),
+                  ),
+                ],
+                utils.stringLiteral('' + importSpecifier),
+              ),
             )
           }
         },
 
-        // class component
-        FunctionExpression(path: any) {
-          if (path.node?.id?.name === 'render') {
-            path.node?.body?.body[0]?.argument?.arguments?.push(createElement('' + COMPONENT_NAME))
+        // 类组件
+        ClassMethod(path: any) {
+          if (path.node.key.name === 'render') {
+            const body = path.node?.body?.body || []
+            const last = body[body?.length - 1]
+            insertComponent(last, '' + componentName, state)
           }
         },
 
-        // function component
+        // 函数式组件
         ExportDefaultDeclaration(path: any) {
           const exportType = path.node?.declaration?.type
-
-          const isFnExport = exportType === "FunctionDeclaration"
-          if (isFnExport) {
+          if (exportType === 'FunctionDeclaration') {
             const mainFnBody = path.node?.declaration?.body?.body
             const length = mainFnBody.length
             const last = mainFnBody[length - 1]
-            if (last.type === 'ReturnStatement') {
-              if (last.argument?.callee?.property?.name === 'createElement' && !importedComponent) {
-                const reactCreateArguments = last.argument.arguments
-                importedComponent = true
-                reactCreateArguments.push(createElement('' + COMPONENT_NAME))
-              }
-            }
+            insertComponent(last, '' + componentName, state)
           }
         },
       })
@@ -106,8 +108,37 @@ export default function (source: string, map: any) {
 }
 
 function createElement(name: string) {
-  const reactIdentifier = utils.identifier("React")
-  const createElementIdentifier = utils.identifier("createElement")
+  const reactIdentifier = utils.identifier('React')
+  const createElementIdentifier = utils.identifier('createElement')
   const callee = utils.memberExpression(reactIdentifier, createElementIdentifier)
   return utils.callExpression(callee, [utils.identifier(name)])
+}
+
+function createJSX(name: string) {
+  return utils.jSXElement(
+    utils.jSXOpeningElement(utils.jsxIdentifier('' + name), [], true),
+    null,
+    [],
+    true,
+  )
+}
+
+function insertComponent(node: any, componentName: string, state: any) {
+  if (node?.type === 'ReturnStatement') {
+    // createElement
+    if (node.argument?.callee?.property?.name === 'createElement' && !state.importedComponent) {
+      state.importedComponent = true
+      const reactCreateArguments = node.argument.arguments
+      reactCreateArguments.push(createElement(componentName))
+    }
+    // JSX
+    if (node.argument?.type === 'JSXElement' && !state.importedComponent) {
+      state.importedComponent = true
+      node.argument.children.push(createJSX(componentName))
+    }
+  }
+}
+
+function defaultJudgePage(filePath: string) {
+  return /(package-.+\/)?pages\/.+\/index\.[tj]sx$/.test(filePath)
 }

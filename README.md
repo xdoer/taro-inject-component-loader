@@ -10,15 +10,23 @@
 
 ## 环境
 
-`taro react typescript`
+`taro react`
 
-## 使用
+## 安装
 
-~~将本仓库拉到本地，安装后运行 **npm build** 命令，然后将 **dist** 文件夹拷贝到你的项目里，在 **config/index.js** 配一下就好了。~~
+`npm install taro-inject-component-loader -D` 。
 
-直接 `npm install taro-inject-component-loader -D` 即可。
+## 配置
 
-配置示例:
+### 配置项
+
+>* importSpecifier 导入标识符
+>* componentName 导入的组件名称
+>* isPage 判断当前遍历到的文件是否为页面（可选配置）
+
+isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` 和 `src/package-模块名称/pages/页面名称/index.[tj]sx` 这两种情形下的文件识别为页面。
+
+### 配置示例
 
 ```ts
   webpackChain(chain) {
@@ -29,11 +37,18 @@
             test: /\.tsx$/,
             use: [
               {
-                // loader: path.resolve(__dirname, '../../../dist'), // loader 路径
                 loader: 'taro-inject-component-loader',
                 options: {
-                  IMPORT_SPECIFIER: '@components/BaseComponent',  // 导入标识符
-                  COMPONENT_NAME: 'BaseComponent',  // 导入组件名
+                  // 导入标识符
+                  importSpecifier: '@components/BaseComponent', 
+
+                  // 导入组件名
+                  componentName: 'BaseComponent',
+
+                  // 判断遍历到的文件是否为页面
+                  isPage(filePath) {
+                    return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(filePath)
+                  }
                 },
               },
             ],
@@ -56,13 +71,8 @@ import { BaseComponent } from '@components/BaseComponent'
 ...
 ```
 
-## 经验分享
+## 代码示例
 
-Taro 中内置了 babel-loader 处理文件，使用自定义 loader 只能通过 webpack-clain 配置，但 webpack-clain 似乎没办法改变 loader 执行顺序，所以我们的 loader 拿到的 source 数据实际是经过 babel-loader 加工过的数据，这位开发调试带来的巨大的困难。
+[ts版本](example/ts-taro-react/config/index.js)
 
-我是这样做的
-
-> - 在 loader 中用将 node fs api, 将 source 写入文件
-> - 打开 source 文件，拷贝代码
-> - 粘贴到 [astexplorer](https://astexplorer.net/) 即可查看到 AST 代码结构
-> - 根据代码结构就可以很顺畅的编写代码了
+[js版本](example/js-taro-react/config/index.js)

@@ -49,10 +49,15 @@ const config = {
               test: /\.tsx$/,
               use: [
                 {
-                  loader: 'taro-inject-component-loader',
+                  loader: path.resolve(__dirname, '../../../dist/index.js'),
                   options: {
-                    IMPORT_SPECIFIER: '@components/BaseComponent',
-                    COMPONENT_NAME: 'BaseComponent',
+                    importSpecifier: '@components/BaseComponent',
+                    componentName: 'BaseComponent',
+                    isPage(filePath) {
+                      return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(
+                        filePath
+                      );
+                    },
                   },
                 },
               ],
@@ -77,6 +82,31 @@ const config = {
           generateScopedName: '[name]__[local]___[hash:base64:5]',
         },
       },
+    },
+    webpackChain(chain) {
+      chain.merge({
+        module: {
+          rule: {
+            injectBaseComponentLoader: {
+              test: /\.tsx$/,
+              use: [
+                {
+                  loader: path.resolve(__dirname, '../../../dist/index.js'),
+                  options: {
+                    importSpecifier: '@components/BaseComponent',
+                    componentName: 'BaseComponent',
+                    isPage(filePath) {
+                      return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(
+                        filePath
+                      );
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      });
     },
   },
 };

@@ -1,5 +1,5 @@
 {
-  "version": "0.1.3",
+  "version": "0.1.4",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -34,12 +34,6 @@
     "hooks": {
       "pre-commit": "tsdx lint"
     }
-  },
-  "prettier": {
-    "printWidth": 80,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
   },
   "name": "taro-inject-component-loader",
   "author": "Thomas Trainset",
