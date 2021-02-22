@@ -21,7 +21,7 @@ const schema = {
   additionalProperties: false,
 }
 
-export default function(source: string) {
+export default function (source: string) {
   // @ts-ignore
   const webpackEnv = this
 
@@ -140,5 +140,7 @@ function insertComponent(node: any, componentName: string, state: any) {
 }
 
 function defaultJudgePage(filePath: string) {
-  return /(package-.+\/)?pages\/.+\/index\.[tj]sx$/.test(filePath)
+  // 兼容 windows 路径
+  const formatFilePath = filePath.replace(/\\/g, '/')
+  return /(package-.+\/)?pages\/.+\/index\.[tj]sx$/.test(formatFilePath)
 }
