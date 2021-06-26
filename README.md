@@ -20,9 +20,9 @@
 
 ### 配置项
 
->* importSpecifier 导入标识符
->* componentName 导入的组件名称
->* isPage 判断当前遍历到的文件是否为页面（可选配置）
+> - importSpecifier 导入标识符
+> - componentName 导入的组件名称
+> - isPage 判断当前遍历到的文件是否为页面（可选配置）
 
 isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` 和 `src/package-模块名称/pages/页面名称/index.[tj]sx` 这两种情形下的文件识别为页面。
 
@@ -40,12 +40,12 @@ isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` �
                 loader: 'taro-inject-component-loader',
                 options: {
                   // 导入标识符
-                  importSpecifier: '@components/BaseComponent', 
+                  importSpecifier: '@components/BaseComponent',
 
                   // 导入组件名
                   componentName: 'BaseComponent',
 
-                  // 判断遍历到的文件是否为页面
+                  // 需要根据文件路径、判断遍历到的文件是否为页面
                   isPage(filePath) {
                     return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(filePath)
                   }
@@ -59,20 +59,38 @@ isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` �
   },
 ```
 
-注入后的代码示例
+## 效果
+
+### 源代码
 
 ```tsx
+import { View } from '@taro/components'
+
+export default function Index() {
+  return <View>哈哈哈哈哈</View>
+}
+```
+
+### 注入后的代码
+
+```tsx
+import { View } from '@taro/components'
 import { BaseComponent } from '@components/BaseComponent'
 
-...
-
-<BaseComponent />
-
-...
+export default function Index() {
+  return (
+    <View>
+      哈哈哈哈哈
+      <BaseComponent />
+    </View>
+  )
+}
 ```
+
+会自动注入为页面根节点的最后一个子元素
 
 ## 代码示例
 
-[ts版本](example/ts-taro-react/config/index.js)
+[ts 版本](example/ts-taro-react/config/index.js)
 
-[js版本](example/js-taro-react/config/index.js)
+[js 版本](example/js-taro-react/config/index.js)
