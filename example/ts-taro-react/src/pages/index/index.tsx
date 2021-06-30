@@ -3,6 +3,12 @@ import { View } from '@styli/taro'
 import './index.scss'
 import { navigateTo } from '@tarojs/taro'
 
+class A extends Component {
+  render() {
+    return <View>哈哈哈哈哈啊哈哈哈哈哈=========A组件</View>
+  }
+}
+
 export default class Index extends Component {
 
   componentWillMount() { }
@@ -33,6 +39,7 @@ export default class Index extends Component {
             点击
           </View>
         </View>
+        <A />
       </View>
     )
   }
