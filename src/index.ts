@@ -21,7 +21,7 @@ const schema = {
   additionalProperties: false,
 }
 
-export default function (source: string) {
+export default function(source: string) {
   // @ts-ignore
   const webpackEnv = this
 
@@ -61,6 +61,19 @@ export default function (source: string) {
         importedComponent: false,
       }
 
+      // 获取组件名称
+      const componentNames = new Set()
+
+      traverse(ast, {
+        // 函数式组件
+        ExportDefaultDeclaration(path: any) {
+          const exportType = path.node?.declaration?.type
+          if (exportType !== 'FunctionDeclaration') {
+            componentNames.add(path.node.declaration.name)
+          }
+        },
+      })
+
       traverse(ast, {
         // 添加申明
         ImportDeclaration(path: any) {
@@ -89,13 +102,31 @@ export default function (source: string) {
           }
         },
 
-        // 函数式组件
+        // 表达式 函数式组件 箭头函数组件
         ExportDefaultDeclaration(path: any) {
           const exportType = path.node?.declaration?.type
-          if (exportType === 'FunctionDeclaration') {
+          if (exportType === 'FunctionDeclaration' || exportType === 'ArrowFunctionExpression') {
             const mainFnBody = path.node?.declaration?.body?.body
             const length = mainFnBody.length
             const last = mainFnBody[length - 1]
+            insertComponent(last, '' + componentName, state)
+          }
+        },
+        // 声明式 箭头函数组件
+        VariableDeclaration: function VariableDeclaration(path: any) {
+          if (componentNames.has(path.node.declarations[0].id.name)) {
+            const mainAFBody = path.node.declarations[0].init.body.body
+            const length = mainAFBody.length
+            const last = mainAFBody[length - 1]
+            insertComponent(last, '' + componentName, state)
+          }
+        },
+        // 声明式 函数组件
+        FunctionDeclaration: function VariableDeclaration(path: any) {
+          if (componentNames.has(path.node.id.name)) {
+            const mainAFBody = path.node.body.body
+            const length = mainAFBody.length
+            const last = mainAFBody[length - 1]
             insertComponent(last, '' + componentName, state)
           }
         },
