@@ -8,6 +8,51 @@
 
 为每个页面注入全局组件。支持主包和分包，支持类写法和函数写法。
 
+## 语法支持
+
+下面提到的写法中，都支持注入组件
+
+```tsx
+// 导出匿名函数
+export default function () {}
+
+// 导出具名函数
+export default function A() {}
+
+// 导出匿名箭头函数
+export default () => {}
+
+// 导出具名箭头函数
+export default const A = () => {}
+
+// 导出匿名类
+export default class {}
+
+// 导出具名类
+export default class A {}
+```
+
+此外，还可以使用标识符导出
+
+```tsx
+// 导出普通函数
+function A() {}
+
+const A = function() {}
+
+// 导出箭头函数
+const A = () => {}
+
+// 导出类
+class A {}
+
+const A = class {}
+
+export default A
+```
+
+注意: 箭头函数必须写括号和 return 返回。即只支持 `const A = () => { return <View></View> }` 这种形式，不支持 `const A = () => <View></View>`
+
 ## 环境
 
 `taro react`

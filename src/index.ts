@@ -21,7 +21,7 @@ const schema = {
   additionalProperties: false,
 }
 
-export default function(source: string) {
+export default function (source: string) {
   // @ts-ignore
   const webpackEnv = this
 
@@ -41,16 +41,59 @@ export default function(source: string) {
       plugins: ['jsx', 'typescript', 'classProperties'],
     })
 
-    /**
-     * 如果有导入申明，则默认表示已手动导入了组件
-     */
+    // 如果有导入申明，则默认表示已手动导入了组件
     let insert = false
 
+    // 声明名称
+    const declarations = new Map()
+
     traverse(ast, {
+      // 查找是否有导入
       ImportDeclaration(path: any) {
         if (path.node?.source?.value === importSpecifier) {
           insert = true
         }
+      },
+
+      // 收集页面文件里的所有申明
+      // 类组件
+      ClassDeclaration(path) {
+        const type = path.node?.type
+        const name = path.node?.id?.name || 'anonymous-class'
+        declarations.set(name, type)
+      },
+
+      // 函数申明
+      FunctionDeclaration(path) {
+        const type = path.node?.type
+        const name = path.node?.id?.name || 'anonymous-function'
+        declarations.set(name, type)
+      },
+
+      // 表达式申明
+      VariableDeclaration(path) {
+        path.node.declarations.forEach((declaration: any) => {
+          // const a = () => {}
+          if (declaration.init?.type === 'ArrowFunctionExpression') {
+            const type = declaration.init?.type
+            const name = declaration.id?.name
+            declarations.set(name, type)
+          }
+
+          // const a = function(){}
+          if (declaration.init?.type === 'FunctionExpression') {
+            const type = declaration.init?.type
+            const name = declaration.id?.name
+            declarations.set(name, type)
+          }
+
+          // const a = class {}
+          if (declaration.init?.type === 'ClassExpression') {
+            const type = declaration.init?.type
+            const name = declaration.id?.name
+            declarations.set(name, type)
+          }
+        })
       },
     })
 
@@ -61,22 +104,9 @@ export default function(source: string) {
         importedComponent: false,
       }
 
-      // 获取组件名称
-      const componentNames = new Set()
-
-      traverse(ast, {
-        // 函数式组件
-        ExportDefaultDeclaration(path: any) {
-          const exportType = path.node?.declaration?.type
-          if (exportType !== 'FunctionDeclaration') {
-            componentNames.add(path.node.declaration.name)
-          }
-        },
-      })
-
       traverse(ast, {
         // 添加申明
-        ImportDeclaration(path: any) {
+        ImportDeclaration(path) {
           if (!state.importedDeclaration) {
             state.importedDeclaration = true
             path.insertBefore(
@@ -93,41 +123,93 @@ export default function(source: string) {
           }
         },
 
-        // 类组件
-        ClassMethod(path: any) {
-          if (path.node.key.name === 'render') {
-            const body = path.node?.body?.body || []
-            const last = body[body?.length - 1]
-            insertComponent(last, '' + componentName, state)
-          }
-        },
+        // 默认导出的为页面组件
+        ExportDefaultDeclaration(path) {
 
-        // 表达式 函数式组件 箭头函数组件
-        ExportDefaultDeclaration(path: any) {
-          const exportType = path.node?.declaration?.type
-          if (exportType === 'FunctionDeclaration' || exportType === 'ArrowFunctionExpression') {
+          // 如果默认导出的是函数
+          if (path.node?.declaration?.type === 'FunctionDeclaration') {
             const mainFnBody = path.node?.declaration?.body?.body
             const length = mainFnBody.length
             const last = mainFnBody[length - 1]
             insertComponent(last, '' + componentName, state)
           }
-        },
-        // 声明式 箭头函数组件
-        VariableDeclaration: function VariableDeclaration(path: any) {
-          if (componentNames.has(path.node.declarations[0].id.name)) {
-            const mainAFBody = path.node.declarations[0].init.body.body
-            const length = mainAFBody.length
-            const last = mainAFBody[length - 1]
+
+          // 默认导出箭头函数
+          if (path.node?.declaration?.type === 'ArrowFunctionExpression') {
+            // 不支持 export default () => <View></View>
+            // 支持 export default () => { return <View></View> }
+            if (path.node?.declaration?.body.type !== 'BlockStatement') return
+
+            const mainFnBody = path.node?.declaration?.body?.body
+            const length = mainFnBody.length
+            const last = mainFnBody[length - 1]
             insertComponent(last, '' + componentName, state)
           }
-        },
-        // 声明式 函数组件
-        FunctionDeclaration: function VariableDeclaration(path: any) {
-          if (componentNames.has(path.node.id.name)) {
-            const mainAFBody = path.node.body.body
-            const length = mainAFBody.length
-            const last = mainAFBody[length - 1]
-            insertComponent(last, '' + componentName, state)
+
+          // 默认导出类
+          if (path.node?.declaration.type === 'ClassDeclaration') {
+            traverse(path.node, {
+              ClassMethod(path) {
+                if ((path.node.key as any).name === 'render') {
+                  const body = path.node?.body?.body || []
+                  const last = body[body?.length - 1]
+                  insertComponent(last, '' + componentName, state)
+                  return
+                }
+              },
+            }, path.scope, path)
+          }
+
+          // 如果默认导出的是一个申明
+          if (path.node?.declaration?.type === "Identifier") {
+            const name = path.node?.declaration?.name
+            const componentType = declarations.get(name)
+
+            // const A = function (){}
+            // export default A
+            if (componentType === 'FunctionDeclaration') {
+              traverse(path.parent, {
+                FunctionDeclaration(path) {
+                  const mainFnBody = path.node?.body?.body
+                  const length = mainFnBody.length
+                  const last = mainFnBody[length - 1]
+                  insertComponent(last, '' + componentName, state)
+                }
+              })
+            }
+
+            // const A = class {}
+            // export default A
+            if (componentType === 'ClassDeclaration') {
+              traverse(path.parent, {
+                ClassMethod(path) {
+                  if ((path.node.key as any).name === 'render') {
+                    const body = path.node?.body?.body || []
+                    const last = body[body?.length - 1]
+                    insertComponent(last, '' + componentName, state)
+                  }
+                },
+              })
+            }
+
+            // const A = () => {}
+            // export default A
+            if (componentType === 'ArrowFunctionExpression') {
+              traverse(path.parent, {
+                VariableDeclarator(path) {
+                  if (path.node.id.type !== 'Identifier') return
+                  if (path.node.init?.type !== 'ArrowFunctionExpression') return
+                  if (path.node.init?.body.type !== 'BlockStatement') return
+
+                  if (name === path.node.id.name) {
+                    const mainFnBody = path.node.init.body.body
+                    const length = mainFnBody.length
+                    const last = mainFnBody[length - 1]
+                    insertComponent(last, '' + componentName, state)
+                  }
+                },
+              })
+            }
           }
         },
       })
