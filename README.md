@@ -45,7 +45,7 @@ class A {}
 
 const A = class {}
 
-const A = class {}
+const A = class extends Component {}
 
 export default A
 ```
