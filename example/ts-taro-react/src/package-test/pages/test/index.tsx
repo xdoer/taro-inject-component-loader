@@ -1,15 +1,15 @@
-import React from 'react'
+import React, { Component } from 'react'
 import { View } from '@styli/taro'
 
-// function Index222() {
-//   return (
-//     <View pt-100>
-//     </View>
-//   )
-// }
+const Index222 = class extends Component {
 
-const Index222 = () => {
-  return <View pt-100></View>
+  render() {
+    return (
+      <View>
+        哈哈哈哈哈哈哈
+      </View>
+    )
+  }
 }
 
 export default Index222
