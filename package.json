@@ -22,11 +22,11 @@
     "inject"
   ],
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
+    "start": "tsdx watch --format cjs",
+    "build": "tsdx build --format cjs",
     "test": "tsdx test",
     "lint": "tsdx lint",
-    "prepare": "tsdx build",
+    "prepare": "tsdx build --format cjs",
     "size": "size-limit",
     "analyze": "size-limit --why"
   },
