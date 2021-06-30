@@ -167,9 +167,9 @@ export default function (source: string) {
 
             // const A = function (){}
             // export default A
-            if (componentType === 'FunctionDeclaration') {
+            if (componentType === 'FunctionExpression') {
               traverse(path.parent, {
-                FunctionDeclaration(path) {
+                FunctionExpression(path) {
                   const mainFnBody = path.node?.body?.body
                   const length = mainFnBody.length
                   const last = mainFnBody[length - 1]
@@ -180,7 +180,7 @@ export default function (source: string) {
 
             // const A = class {}
             // export default A
-            if (componentType === 'ClassDeclaration') {
+            if (componentType === 'ClassExpression') {
               traverse(path.parent, {
                 ClassMethod(path) {
                   if ((path.node.key as any).name === 'render') {
