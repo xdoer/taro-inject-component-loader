@@ -14,16 +14,13 @@
 
 ```tsx
 // 导出匿名函数
-export default function () {}
+export default function() {}
 
 // 导出具名函数
 export default function A() {}
 
 // 导出匿名箭头函数
 export default () => {}
-
-// 导出具名箭头函数
-export default const A = () => {}
 
 // 导出匿名类
 export default class {}
