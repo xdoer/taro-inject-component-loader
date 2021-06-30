@@ -10,7 +10,7 @@
 
 ## 语法支持
 
-下面提到的写法中，都支持注入组件
+下面提到的写法中，都支持注入组件。
 
 ```tsx
 // 导出匿名函数
@@ -48,10 +48,13 @@ class A {}
 
 const A = class {}
 
+const A = class {}
+
 export default A
 ```
 
-注意: 箭头函数必须写括号和 return 返回。即只支持 `const A = () => { return <View></View> }` 这种形式，不支持 `const A = () => <View></View>`
+> - 箭头函数必须写括号和 return 返回。即只支持 `const A = () => { return <View></View> }` 这种形式，不支持 `const A = () => <View></View>`
+> - 页面必须有默认导出
 
 ## 环境
 
