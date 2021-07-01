@@ -44,7 +44,7 @@ export default function (source: string) {
     // 如果有导入申明，则默认表示已手动导入了组件
     let insert = false
 
-    // 声明名称
+    // 保存所有顶层的声明
     const declarations = new Map()
 
     traverse(ast, {
@@ -58,6 +58,9 @@ export default function (source: string) {
       // 收集页面文件里的所有申明
       // 类组件
       ClassDeclaration(path) {
+        // 如果不是顶层的申明，则直接返回
+        if (path.parent.type !== 'Program') return
+
         const type = path.node?.type
         const name = path.node?.id?.name || 'anonymous-class'
         declarations.set(name, type)
@@ -65,6 +68,9 @@ export default function (source: string) {
 
       // 函数申明
       FunctionDeclaration(path) {
+        // 如果不是顶层的申明，则直接返回
+        if (path.parent.type !== 'Program') return
+
         const type = path.node?.type
         const name = path.node?.id?.name || 'anonymous-function'
         declarations.set(name, type)
