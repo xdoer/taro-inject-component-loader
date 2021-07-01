@@ -72,6 +72,9 @@ export default function (source: string) {
 
       // 表达式申明
       VariableDeclaration(path) {
+        // 如果不是顶层的申明，则直接返回
+        if (path.parent.type !== 'Program') return
+
         path.node.declarations.forEach((declaration: any) => {
           // const a = () => {}
           if (declaration.init?.type === 'ArrowFunctionExpression') {
