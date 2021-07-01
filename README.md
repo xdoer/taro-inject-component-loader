@@ -20,7 +20,7 @@
 
 ### 配置项
 
-> - importSpecifier 导入标识符
+> - importSpecifier 导入路径
 > - componentName 导入的组件名称
 > - isPage 判断当前遍历到的文件是否为页面（可选配置）
 
@@ -39,7 +39,7 @@ isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` �
               {
                 loader: 'taro-inject-component-loader',
                 options: {
-                  // 导入标识符
+                  // 导入路径
                   importSpecifier: '@components/BaseComponent',
 
                   // 导入组件名
@@ -80,7 +80,7 @@ export default class {}
 export default class A {}
 ```
 
-此外，还可以使用标识符导出
+此外，还可以使用表达式导出
 
 ```tsx
 // 导出普通函数
@@ -133,20 +133,17 @@ export default function Index() {
 
 ## 注意事项
 
-> - 箭头函数必须写括号和 return 返回。即只支持 `const A = () => { return <View></View> }` 这种形式，不支持 `const A = () => <View></View>` 形式的注入
-> - 页面必须有 export default 默认导出
-> - 当识别到文件手动导入了要注入的组件、则会跳过代码注入。即: 上面示例中，如果手动导入了 BaseComponent 组件，无论有没有用到这个组件，代码都不会注入。
-> - 使用标识符导出，代码中要避免出现标识符相同的名称
+### 箭头函数必须写括号和 return 返回
 
-不要出现这种情况
+即只支持 `const A = () => { return <View></View> }` 这种形式，不支持 `const A = () => <View></View>` 形式的注入
 
-```tsx
-function A {
-  const A = 1
-}
+### 页面必须有 export default 默认导出
 
-export default A
-```
+loader 根据 export default 后面的内容，来找到和注入代码。没有 export default 代码不会注入
+
+### 跳过代码注入
+
+loader 根据文件中有没有 loader 配置里 `importSpecifier` 的导入，来判断页面有没有注入代码。当识别到文件手动导入了要注入的组件、则会跳过代码注入。
 
 ## 代码示例
 
