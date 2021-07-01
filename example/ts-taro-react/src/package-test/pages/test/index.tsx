@@ -1,6 +1,13 @@
 import React, { Component } from 'react'
 import { View } from '@styli/taro'
 
+
+function a() {
+  const Index222 = 1
+
+  console.log(Index222)
+}
+
 const Index222 = class extends Component {
 
   render() {
