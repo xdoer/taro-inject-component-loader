@@ -19,4 +19,6 @@ const Index222 = class extends Component {
   }
 }
 
-export default Index222
+const X = () => <View>哈哈哈</View>
+
+export default () => <View>哈哈哈</View>

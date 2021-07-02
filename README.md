@@ -133,10 +133,6 @@ export default function Index() {
 
 ## 注意事项
 
-### 箭头函数必须写括号和 return 返回
-
-即只支持 `const A = () => { return <View></View> }` 这种形式，不支持 `const A = () => <View></View>` 形式的注入
-
 ### 页面必须有 export default 默认导出
 
 loader 根据 export default 后面的内容，来找到和注入代码。没有 export default 代码不会注入
