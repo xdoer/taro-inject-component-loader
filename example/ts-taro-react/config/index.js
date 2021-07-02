@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require('path')
 
 const config = {
   projectName: 'taro-example',
@@ -51,20 +51,14 @@ const config = {
                 {
                   loader: path.resolve(__dirname, '../../../dist/index.js'),
                   options: {
-                    importSpecifier: '@components/BaseComponent',
-                    componentName: 'BaseComponent',
-                    isPage(filePath) {
-                      return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(
-                        filePath
-                      );
-                    },
+                    importPath: '@components/BaseComponent',
                   },
                 },
               ],
             },
           },
         },
-      });
+      })
     },
   },
   h5: {
@@ -96,9 +90,7 @@ const config = {
                     importSpecifier: '@components/BaseComponent',
                     componentName: 'BaseComponent',
                     isPage(filePath) {
-                      return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(
-                        filePath
-                      );
+                      return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(filePath)
                     },
                   },
                 },
@@ -106,14 +98,14 @@ const config = {
             },
           },
         },
-      });
+      })
     },
   },
-};
+}
 
 module.exports = function(merge) {
   if (process.env.NODE_ENV === 'development') {
-    return merge({}, config, require('./dev'));
+    return merge({}, config, require('./dev'))
   }
-  return merge({}, config, require('./prod'));
-};
+  return merge({}, config, require('./prod'))
+}

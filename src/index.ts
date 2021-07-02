@@ -8,10 +8,7 @@ import { validate } from 'schema-utils'
 const schema = {
   type: 'object',
   properties: {
-    importSpecifier: {
-      type: 'string',
-    },
-    componentName: {
+    importPath: {
       type: 'string',
     },
     isPage: {
@@ -29,7 +26,7 @@ export default function (source: string) {
 
   validate(schema as any, options, { name: 'taro-inject-component-loader' })
 
-  const { importSpecifier = '', componentName = '', isPage = defaultJudgePage } = options || {}
+  const { importPath = '', componentName = 'WebpackInjected', isPage = defaultJudgePage } = options || {}
 
   // 获取原始文件地址
   const filePath = webpackEnv.resourcePath
@@ -50,7 +47,7 @@ export default function (source: string) {
     traverse(ast, {
       // 查找是否有导入
       ImportDeclaration(path) {
-        if (path.node.source.value === importSpecifier) {
+        if (path.node.source.value === importPath) {
           insert = true
         }
       },
@@ -121,12 +118,9 @@ export default function (source: string) {
             path.insertBefore(
               utils.importDeclaration(
                 [
-                  utils.importSpecifier(
-                    utils.identifier('' + componentName),
-                    utils.identifier('' + componentName),
-                  ),
+                  utils.importDefaultSpecifier(utils.identifier('' + componentName)),
                 ],
-                utils.stringLiteral('' + importSpecifier),
+                utils.stringLiteral('' + importPath),
               ),
             )
           }

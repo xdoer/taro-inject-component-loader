@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require('path')
 
 const config = {
   projectName: 'js-taro-react',
@@ -51,20 +51,14 @@ const config = {
                 {
                   loader: path.resolve(__dirname, '../../../dist/index.js'),
                   options: {
-                    importSpecifier: '@components/BaseComponent',
-                    componentName: 'BaseComponent',
-                    isPage(filePath) {
-                      return /(package-.+\/)?pages\/.+\/index\.jsx$/.test(
-                        filePath
-                      );
-                    },
+                    importPath: '@components/BaseComponent',
                   },
                 },
               ],
             },
           },
         },
-      });
+      })
     },
   },
   h5: {
@@ -96,9 +90,7 @@ const config = {
                     importSpecifier: '@components/BaseComponent',
                     componentName: 'BaseComponent',
                     isPage(filePath) {
-                      return /(package-.+\/)?pages\/.+\/index\.jsx$/.test(
-                        filePath
-                      );
+                      return /(package-.+\/)?pages\/.+\/index\.jsx$/.test(filePath)
                     },
                   },
                 },
@@ -106,12 +98,12 @@ const config = {
             },
           },
         },
-      });
+      })
     },
   },
-};
+}
 
-module.exports = function (merge) {
+module.exports = function(merge) {
   if (process.env.NODE_ENV === 'development') {
     return merge({}, config, require('./dev'))
   }

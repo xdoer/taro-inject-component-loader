@@ -20,13 +20,117 @@
 
 ### 配置项
 
-> - importSpecifier 导入路径
-> - componentName 导入的组件名称
-> - isPage 判断当前遍历到的文件是否为页面（可选配置）
+| 字段       | 必填 | 默认                                                             | 含义                   |
+| ---------- | ---- | ---------------------------------------------------------------- | ---------------------- |
+| importPath | 是   | 无                                                               | 导入路径               |
+| isPage     | 否   | (path) => /(package-.+\/)?pages\/.+\/index\.[tj]sx\$/.test(path) | 判断当前文件是不是页面 |
 
 isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` 和 `src/package-模块名称/pages/页面名称/index.[tj]sx` 这两种情形下的文件识别为页面。
 
-### 配置示例
+## 语法支持
+
+下面提到的写法中，都支持注入组件。
+
+```tsx
+// 导出匿名函数
+export default function() {
+  return <View></View>
+}
+
+// 导出具名函数
+export default function A() {
+  return <View></View>
+}
+
+// 导出匿名箭头函数
+export default () => {
+  return <View></View>
+}
+
+export default () => <View></View>
+
+// 导出匿名类
+export default class {
+  render() {
+    return <View></View>
+  }
+}
+
+// 导出具名类
+export default class A {
+  render() {
+    return <View></View>
+  }
+}
+```
+
+此外，还可以使用表达式导出
+
+```tsx
+// 导出普通函数
+function A() {
+  return <View></View>
+}
+
+const A = function() {
+  return <View></View>
+}
+
+// 导出箭头函数
+const A = () => {
+  return <View></View>
+}
+const A = () => <View></View>
+
+// 导出类
+class A {
+  render() {
+    return <View></View>
+  }
+}
+
+const A = class {
+  render() {
+    return <View></View>
+  }
+}
+
+const A = class extends Component {
+  render() {
+    return <View></View>
+  }
+}
+
+export default A
+```
+
+## 效果
+
+### 源代码
+
+页面组件
+
+```tsx
+<!----src/pages/index.tsx----->
+import { View } from '@taro/components'
+
+export default function Index() {
+  return <View>哈哈哈哈哈</View>
+}
+```
+
+要注入的组件
+
+```tsx
+<!----src/components/BaseComponent.tsx----->
+import { View } from '@taro/components'
+
+export default function () {
+  return <View>WebpackInject</View>
+}
+```
+
+### 进行配置
 
 ```ts
   webpackChain(chain) {
@@ -39,13 +143,7 @@ isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` �
               {
                 loader: 'taro-inject-component-loader',
                 options: {
-                  // 导入路径
-                  importSpecifier: '@components/BaseComponent',
-
-                  // 导入组件名
-                  componentName: 'BaseComponent',
-
-                  // 需要根据文件路径、判断遍历到的文件是否为页面
+                  importPath: '@components/BaseComponent',
                   isPage(filePath) {
                     return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(filePath)
                   }
@@ -59,87 +157,46 @@ isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` �
   },
 ```
 
-## 语法支持
-
-下面提到的写法中，都支持注入组件。
-
-```tsx
-// 导出匿名函数
-export default function() {}
-
-// 导出具名函数
-export default function A() {}
-
-// 导出匿名箭头函数
-export default () => {}
-
-// 导出匿名类
-export default class {}
-
-// 导出具名类
-export default class A {}
-```
-
-此外，还可以使用表达式导出
-
-```tsx
-// 导出普通函数
-function A() {}
-
-const A = function() {}
-
-// 导出箭头函数
-const A = () => {}
-
-// 导出类
-class A {}
-
-const A = class {}
-
-const A = class extends Component {}
-
-export default A
-```
-
-## 效果
-
-### 源代码
-
-```tsx
-import { View } from '@taro/components'
-
-export default function Index() {
-  return <View>哈哈哈哈哈</View>
-}
-```
-
 ### 注入后的代码
 
+会自动注入为页面根节点的最后一个子元素
+
 ```tsx
 import { View } from '@taro/components'
-import { BaseComponent } from '@components/BaseComponent'
+import WebpackInject from '@components/BaseComponent'
 
 export default function Index() {
   return (
     <View>
       哈哈哈哈哈
-      <BaseComponent />
+      <WebpackInject />
     </View>
   )
 }
 ```
 
-会自动注入为页面根节点的最后一个子元素。
-
 ## 注意事项
 
-### 页面必须有 export default 默认导出
+### 要注入的组件需要默认导出
 
-loader 根据 export default 后面的内容，来找到和注入代码。没有 export default 代码不会注入
+```tsx
+import { View } from '@taro/components'
+
+// 默认导出
+export default () => <View></View>
+```
 
 ### 跳过代码注入
 
-loader 根据文件中有没有 loader 配置里 `importSpecifier` 的导入，来判断页面有没有注入代码。当识别到文件手动导入了要注入的组件、则会跳过代码注入。
+只要检测到页面里有 importPath 的路径，无论代码中有没有用到该组件，都不会自动注入。
+
+```tsx
+import { View } from '@taro/components'
+// 因为检测到了手动从 importPath 路径导入组件， 所以不会注入组件
+import WebpackInject from 'importPath'
+
+export default () => <View></View>
+```
 
 ## 代码示例
 
