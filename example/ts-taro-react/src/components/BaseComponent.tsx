@@ -1,9 +1,7 @@
 import { View } from '@styli/taro'
-import React, { FC, memo } from 'react'
+import React, { memo } from 'react'
 
-interface BaseComponentProps { }
-
-export const BaseComponent: FC<BaseComponentProps> = memo(({ }) => {
+export default memo(({ }) => {
   return (
     <View center column>
       <View red40 f-40>BaseComponent</View>

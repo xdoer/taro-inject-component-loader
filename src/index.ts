@@ -8,10 +8,7 @@ import { validate } from 'schema-utils'
 const schema = {
   type: 'object',
   properties: {
-    importSpecifier: {
-      type: 'string',
-    },
-    componentName: {
+    importPath: {
       type: 'string',
     },
     isPage: {
@@ -21,7 +18,7 @@ const schema = {
   additionalProperties: false,
 }
 
-export default function(source: string) {
+export default function (source: string) {
   // @ts-ignore
   const webpackEnv = this
 
@@ -29,7 +26,7 @@ export default function(source: string) {
 
   validate(schema as any, options, { name: 'taro-inject-component-loader' })
 
-  const { importSpecifier = '', componentName = '', isPage = defaultJudgePage } = options || {}
+  const { importPath = '', componentName = 'WebpackInjected', isPage = defaultJudgePage } = options || {}
 
   // 获取原始文件地址
   const filePath = webpackEnv.resourcePath
@@ -41,16 +38,68 @@ export default function(source: string) {
       plugins: ['jsx', 'typescript', 'classProperties'],
     })
 
-    /**
-     * 如果有导入申明，则默认表示已手动导入了组件
-     */
+    // 如果有导入申明，则默认表示已手动导入了组件
     let insert = false
 
+    // 保存所有顶层的声明
+    const declarations = new Map()
+
     traverse(ast, {
-      ImportDeclaration(path: any) {
-        if (path.node?.source?.value === importSpecifier) {
+      // 查找是否有导入
+      ImportDeclaration(path) {
+        if (path.node.source.value === importPath) {
           insert = true
         }
+      },
+
+      // 收集页面文件里的所有申明
+      // 类组件
+      ClassDeclaration(path) {
+        // 如果不是顶层的申明，则直接返回
+        if (path.parent.type !== 'Program') return
+
+        const type = path.node.type
+        const name = path.node.id.name || 'anonymous-class'
+        declarations.set(name, type)
+      },
+
+      // 函数申明
+      FunctionDeclaration(path) {
+        // 如果不是顶层的申明，则直接返回
+        if (path.parent.type !== 'Program') return
+
+        const type = path.node.type
+        const name = path.node.id?.name || 'anonymous-function'
+        declarations.set(name, type)
+      },
+
+      // 表达式申明
+      VariableDeclaration(path) {
+        // 如果不是顶层的申明，则直接返回
+        if (path.parent.type !== 'Program') return
+
+        path.node.declarations.forEach((declaration: any) => {
+          // const a = () => {}
+          if (declaration.init.type === 'ArrowFunctionExpression') {
+            const type = declaration.init?.type
+            const name = declaration.id?.name
+            declarations.set(name, type)
+          }
+
+          // const a = function(){}
+          if (declaration.init.type === 'FunctionExpression') {
+            const type = declaration.init.type
+            const name = declaration.id.name
+            declarations.set(name, type)
+          }
+
+          // const a = class {}
+          if (declaration.init.type === 'ClassExpression') {
+            const type = declaration.init.type
+            const name = declaration.id.name
+            declarations.set(name, type)
+          }
+        })
       },
     })
 
@@ -61,73 +110,115 @@ export default function(source: string) {
         importedComponent: false,
       }
 
-      // 获取组件名称
-      const componentNames = new Set()
-
-      traverse(ast, {
-        // 函数式组件
-        ExportDefaultDeclaration(path: any) {
-          const exportType = path.node?.declaration?.type
-          if (exportType !== 'FunctionDeclaration') {
-            componentNames.add(path.node.declaration.name)
-          }
-        },
-      })
-
       traverse(ast, {
         // 添加申明
-        ImportDeclaration(path: any) {
+        ImportDeclaration(path) {
           if (!state.importedDeclaration) {
             state.importedDeclaration = true
             path.insertBefore(
               utils.importDeclaration(
                 [
-                  utils.importSpecifier(
-                    utils.identifier('' + componentName),
-                    utils.identifier('' + componentName),
-                  ),
+                  utils.importDefaultSpecifier(utils.identifier('' + componentName)),
                 ],
-                utils.stringLiteral('' + importSpecifier),
+                utils.stringLiteral('' + importPath),
               ),
             )
           }
         },
 
-        // 类组件
-        ClassMethod(path: any) {
-          if (path.node.key.name === 'render') {
-            const body = path.node?.body?.body || []
-            const last = body[body?.length - 1]
-            insertComponent(last, '' + componentName, state)
-          }
-        },
+        // 默认导出的为页面组件
+        ExportDefaultDeclaration(path) {
 
-        // 表达式 函数式组件 箭头函数组件
-        ExportDefaultDeclaration(path: any) {
-          const exportType = path.node?.declaration?.type
-          if (exportType === 'FunctionDeclaration' || exportType === 'ArrowFunctionExpression') {
-            const mainFnBody = path.node?.declaration?.body?.body
+          // 如果默认导出的是函数
+          if (path.node.declaration.type === 'FunctionDeclaration') {
+            const mainFnBody = path.node.declaration.body.body
             const length = mainFnBody.length
             const last = mainFnBody[length - 1]
             insertComponent(last, '' + componentName, state)
           }
-        },
-        // 声明式 箭头函数组件
-        VariableDeclaration: function VariableDeclaration(path: any) {
-          if (componentNames.has(path.node.declarations[0].id.name)) {
-            const mainAFBody = path.node.declarations[0].init.body.body
-            const length = mainAFBody.length
-            const last = mainAFBody[length - 1]
-            insertComponent(last, '' + componentName, state)
+
+          // 默认导出箭头函数
+          if (path.node.declaration.type === 'ArrowFunctionExpression') {
+            // export default () => { return <View></View> }
+            if (path.node.declaration.body.type === 'BlockStatement') {
+              const mainFnBody = path.node.declaration.body.body
+              const length = mainFnBody.length
+              const last = mainFnBody[length - 1]
+              insertComponent(last, '' + componentName, state)
+            } else {
+              // export default () => <View></View>
+              insertComponent(path.node.declaration.body, '' + componentName, state)
+            }
           }
-        },
-        // 声明式 函数组件
-        FunctionDeclaration: function VariableDeclaration(path: any) {
-          if (componentNames.has(path.node.id.name)) {
-            const mainAFBody = path.node.body.body
-            const length = mainAFBody.length
-            const last = mainAFBody[length - 1]
-            insertComponent(last, '' + componentName, state)
+
+          // 默认导出类
+          if (path.node.declaration.type === 'ClassDeclaration') {
+            traverse(path.node, {
+              ClassMethod(path) {
+                if ((path.node.key as any).name === 'render') {
+                  const body = path.node.body.body || []
+                  const last = body[body.length - 1]
+                  insertComponent(last, '' + componentName, state)
+                  return
+                }
+              },
+            }, path.scope, path)
+          }
+
+          // 如果默认导出的是一个申明
+          if (path.node.declaration.type === "Identifier") {
+            const name = path.node.declaration.name
+            const componentType = declarations.get(name)
+
+            // const A = function (){}
+            // export default A
+            if (componentType === 'FunctionExpression') {
+              traverse(path.parent, {
+                FunctionExpression(path) {
+                  const mainFnBody = path.node?.body?.body
+                  const length = mainFnBody.length
+                  const last = mainFnBody[length - 1]
+                  insertComponent(last, '' + componentName, state)
+                }
+              })
+            }
+
+            // const A = class {}
+            // export default A
+            if (componentType === 'ClassExpression') {
+              traverse(path.parent, {
+                ClassMethod(path) {
+                  if ((path.node.key as any).name === 'render') {
+                    const body = path.node.body.body || []
+                    const last = body[body.length - 1]
+                    insertComponent(last, '' + componentName, state)
+                  }
+                },
+              })
+            }
+
+            if (componentType === 'ArrowFunctionExpression') {
+              traverse(path.parent, {
+                VariableDeclarator(path) {
+                  if (path.node.id.type !== 'Identifier') return
+                  if (path.node.init?.type !== 'ArrowFunctionExpression') return
+                  // const A = () => {}
+                  // export default A
+                  if (path.node.init.body.type == 'BlockStatement') {
+                    if (name === path.node.id.name) {
+                      const mainFnBody = path.node.init.body.body
+                      const length = mainFnBody.length
+                      const last = mainFnBody[length - 1]
+                      insertComponent(last, '' + componentName, state)
+                    }
+                  } else {
+                    // const A = () => <div></div>
+                    // export default A
+                    insertComponent(path.node.init.body, '' + componentName, state)
+                  }
+                },
+              })
+            }
           }
         },
       })
@@ -167,6 +258,9 @@ function insertComponent(node: any, componentName: string, state: any) {
       state.importedComponent = true
       node.argument.children.push(createJSX(componentName))
     }
+  }
+  if (node.type === 'JSXElement' && !state.importedComponent) {
+    node.children.push(createJSX(componentName))
   }
 }
 

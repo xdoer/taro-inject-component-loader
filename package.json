@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
+  "version": "2.0.8",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -9,9 +9,9 @@
   "engines": {
     "node": ">=10"
   },
-  "homepage": "https://github.com/LuckyHH/taro-inject-component-loader",
+  "homepage": "https://github.com/xdoer/taro-inject-component-loader",
   "bugs": {
-    "url": "https://github.com/LuckyHH/taro-inject-component-loader/issues",
+    "url": "https://github.com/xdoer/taro-inject-component-loader/issues",
     "email": "gotoanything@foxmail.com"
   },
   "keywords": [
@@ -22,11 +22,11 @@
     "inject"
   ],
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
+    "start": "tsdx watch --format cjs",
+    "build": "tsdx build --format cjs",
     "test": "tsdx test",
     "lint": "tsdx lint",
-    "prepare": "tsdx build",
+    "prepare": "tsdx build --format cjs",
     "size": "size-limit",
     "analyze": "size-limit --why"
   },
@@ -36,7 +36,7 @@
     }
   },
   "name": "taro-inject-component-loader",
-  "author": "Thomas Trainset",
+  "author": "xdoer",
   "module": "dist/taro-inject-component-loader.esm.js",
   "size-limit": [
     {
