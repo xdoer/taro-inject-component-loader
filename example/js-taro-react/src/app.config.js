@@ -1,5 +1,18 @@
 export default {
-  pages: ['pages/index/index'],
+  pages: [
+    'pages/index/index',
+    'pages/classa/index',
+    'pages/classb/index',
+    'pages/classc/index',
+    'pages/functiona/index',
+    'pages/functionb/index',
+    'pages/functionc/index',
+    'pages/arrowa/index',
+    'pages/arrowb/index',
+    'pages/connectclass/index',
+    'pages/connectfunction/index',
+    'pages/connectarrow/index',
+  ],
   subPackages: [
     {
       root: 'package-test',
@@ -13,4 +26,4 @@ export default {
     navigationBarTitleText: 'WeChat',
     navigationBarTextStyle: 'black',
   },
-};
+}
