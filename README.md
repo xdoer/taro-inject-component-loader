@@ -198,6 +198,140 @@ import WebpackInject from 'importPath'
 export default () => <View></View>
 ```
 
+### 高阶组件代码注入
+
+loader 不支持高阶组件的代码注入
+
+```tsx
+const connect = () => {
+  return CComponent => CComponent
+}
+
+const CustomComponent = () => {
+  return <View>export default connect arrow function Component</View>
+}
+
+export default memo(connect()(CustomComponent))
+```
+
+建议手动引入要注入的组件，或者更改代码写法:
+
+```tsx
+const connect = () => {
+  return CComponent => CComponent
+}
+
+const CustomComponent = () => {
+  return <View>export default connect arrow function Component</View>
+}
+
+const HigherComponent = memo(connect()(CustomComponent))
+
+export default props => {
+  return (
+    <View>
+      <HigherComponent {...props} />
+    </View>
+  )
+}
+```
+
+### Provider
+
+Provider 不能作为根节点组件
+
+```tsx
+export default () => {
+  return (
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  )
+}
+```
+
+loader 默认会将要注入的组件，注入到 App 组件的同级位置上，导致一些 Bug
+
+```tsx
+export default () => {
+  return (
+    <ThemeProvider>
+      <App />
+      <WebpackInject /> // 代码出错
+    </ThemeProvider>
+  )
+}
+```
+
+建议手动引入组件，或者更改代码：
+
+```tsx
+const Wrapper = ({ children }) => {
+  return (
+    <ThemeProvider>
+      <View>
+        <App />
+        {children}
+      </View>
+    </ThemeProvider>
+  )
+}
+
+export default () => {
+  return <Wrapper></Wrapper>
+}
+```
+
+### 自闭合标签
+
+自闭合标签组件不支持组件注入。
+
+```tsx
+export default () => <Button />
+```
+
+建议手动引入组件，或者将代码改为：
+
+```tsx
+export default () => (
+  <View>
+    <Button />
+  </View>
+)
+```
+
+### 空标签
+
+空标签不支持组件注入。在编译的过程中，空标签会被剥去，导致找不到注入口。
+
+```tsx
+export default () => (
+  return (
+    <>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+      <Button>点击</Button>
+    </>
+  )
+)
+```
+
+建议手动引入组件，或者将代码改为：
+
+```tsx
+export default () => (
+  return (
+    <View>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+      <Button>点击</Button>
+    </View>
+  )
+)
+```
+
 ## 代码示例
 
 [ts 版本](example/ts-taro-react/config/index.js)
