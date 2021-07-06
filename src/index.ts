@@ -222,6 +222,15 @@ export default function (source: string) {
           }
         },
       })
+
+      if (!state.importedComponent) {
+        webpackEnv.emitWarning(`页面: ${filePath} 注入组件失败，建议手动引入组件。组件注入限制请查阅: https://github.com/xdoer/taro-inject-component-loader`)
+
+      }
+      if (!state.importedDeclaration) {
+        webpackEnv.emitWarning(`页面: ${filePath} 注入导入申明失败，建议手动引入组件。组件注入限制请查阅: https://github.com/xdoer/taro-inject-component-loader`)
+      }
+
       source = generate(ast).code
     }
   }

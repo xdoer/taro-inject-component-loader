@@ -1,9 +1,9 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { View } from '@styli/taro'
 
-export default function() {
+export default memo(function() {
   return (
     <View pt-100>
     </View>
   )
-}
+})
