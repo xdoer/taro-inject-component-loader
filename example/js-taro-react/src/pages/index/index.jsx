@@ -37,15 +37,15 @@ const data = [
     path: '/pages/arrowb/index',
   },
   {
-    title: 'connet class',
+    title: 'connect class',
     path: '/pages/connectclass/index',
   },
   {
-    title: 'connet function',
+    title: 'connect function',
     path: '/pages/connectfunction/index',
   },
   {
-    title: 'connet arrow',
+    title: 'connect arrow',
     path: '/pages/connectarrow/index',
   },
 ]
