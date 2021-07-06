@@ -233,11 +233,17 @@ function defaultJudgePage(filePath: string) {
 }
 
 function handelIdentifier({ componentType, path, componentName, state, name }: any) {
-  if (componentType === 'FunctionExpression') {
-    // const A = function (){}
+  if (componentType === 'FunctionExpression' || componentType === 'FunctionDeclaration') {
+    // const A = function (){} or functionA () {}
     // export default A
     traverse(path.parent, {
       FunctionExpression(path) {
+        const mainFnBody = path.node?.body?.body
+        const length = mainFnBody.length
+        const last = mainFnBody[length - 1]
+        insertComponent(last, '' + componentName, state)
+      },
+      FunctionDeclaration(path) {
         const mainFnBody = path.node?.body?.body
         const length = mainFnBody.length
         const last = mainFnBody[length - 1]
