@@ -172,20 +172,32 @@ export default function (source: string) {
 
             // const A = function (){}
             // export default A
-            if (componentType === 'FunctionExpression') {
+
+            // function A(){}
+            // export default A
+            if (['FunctionDeclaration', 'FunctionExpression'].includes(componentType)) {
               traverse(path.parent, {
                 FunctionExpression(path) {
                   const mainFnBody = path.node?.body?.body
                   const length = mainFnBody.length
                   const last = mainFnBody[length - 1]
                   insertComponent(last, '' + componentName, state)
-                }
+                },
+                FunctionDeclaration(path) {
+                  const mainFnBody = path.node?.body?.body
+                  const length = mainFnBody.length
+                  const last = mainFnBody[length - 1]
+                  insertComponent(last, '' + componentName, state)
+                },
               })
             }
 
             // const A = class {}
             // export default A
-            if (componentType === 'ClassExpression') {
+
+            // class A {}
+            // export default A
+            if (['ClassExpression', 'ClassDeclaration'].includes(componentType)) {
               traverse(path.parent, {
                 ClassMethod(path) {
                   if ((path.node.key as any).name === 'render') {
