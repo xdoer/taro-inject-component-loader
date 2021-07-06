@@ -18,7 +18,7 @@ const schema = {
   additionalProperties: false,
 }
 
-export default function (source: string) {
+export default function(source: string) {
   // @ts-ignore
   const webpackEnv = this
 
@@ -26,7 +26,8 @@ export default function (source: string) {
 
   validate(schema as any, options, { name: 'taro-inject-component-loader' })
 
-  const { importPath = '', componentName = 'WebpackInjected', isPage = defaultJudgePage } = options || {}
+  const { importPath = '', componentName = 'WebpackInjected', isPage = defaultJudgePage } =
+    options || {}
 
   // 获取原始文件地址
   const filePath = webpackEnv.resourcePath
@@ -117,9 +118,7 @@ export default function (source: string) {
             state.importedDeclaration = true
             path.insertBefore(
               utils.importDeclaration(
-                [
-                  utils.importDefaultSpecifier(utils.identifier('' + componentName)),
-                ],
+                [utils.importDefaultSpecifier(utils.identifier('' + componentName))],
                 utils.stringLiteral('' + importPath),
               ),
             )
@@ -128,7 +127,6 @@ export default function (source: string) {
 
         // 默认导出的为页面组件
         ExportDefaultDeclaration(path) {
-
           // 如果默认导出的是函数
           if (path.node.declaration.type === 'FunctionDeclaration') {
             const mainFnBody = path.node.declaration.body.body
@@ -150,74 +148,38 @@ export default function (source: string) {
               insertComponent(path.node.declaration.body, '' + componentName, state)
             }
           }
-
           // 默认导出类
           if (path.node.declaration.type === 'ClassDeclaration') {
-            traverse(path.node, {
-              ClassMethod(path) {
-                if ((path.node.key as any).name === 'render') {
-                  const body = path.node.body.body || []
-                  const last = body[body.length - 1]
-                  insertComponent(last, '' + componentName, state)
-                  return
-                }
-              },
-            }, path.scope, path)
-          }
-
-          // 如果默认导出的是一个申明
-          if (path.node.declaration.type === "Identifier") {
-            const name = path.node.declaration.name
-            const componentType = declarations.get(name)
-
-            // const A = function (){}
-            // export default A
-            if (componentType === 'FunctionExpression') {
-              traverse(path.parent, {
-                FunctionExpression(path) {
-                  const mainFnBody = path.node?.body?.body
-                  const length = mainFnBody.length
-                  const last = mainFnBody[length - 1]
-                  insertComponent(last, '' + componentName, state)
-                }
-              })
-            }
-
-            // const A = class {}
-            // export default A
-            if (componentType === 'ClassExpression') {
-              traverse(path.parent, {
+            traverse(
+              path.node,
+              {
                 ClassMethod(path) {
                   if ((path.node.key as any).name === 'render') {
                     const body = path.node.body.body || []
                     const last = body[body.length - 1]
                     insertComponent(last, '' + componentName, state)
+                    return
                   }
                 },
-              })
-            }
+              },
+              path.scope,
+              path,
+            )
+          }
 
-            if (componentType === 'ArrowFunctionExpression') {
-              traverse(path.parent, {
-                VariableDeclarator(path) {
-                  if (path.node.id.type !== 'Identifier') return
-                  if (path.node.init?.type !== 'ArrowFunctionExpression') return
-                  // const A = () => {}
-                  // export default A
-                  if (path.node.init.body.type == 'BlockStatement') {
-                    if (name === path.node.id.name) {
-                      const mainFnBody = path.node.init.body.body
-                      const length = mainFnBody.length
-                      const last = mainFnBody[length - 1]
-                      insertComponent(last, '' + componentName, state)
-                    }
-                  } else {
-                    // const A = () => <div></div>
-                    // export default A
-                    insertComponent(path.node.init.body, '' + componentName, state)
-                  }
-                },
-              })
+          // 如果默认导出的是一个申明
+          if (path.node.declaration.type === 'Identifier') {
+            const name = path.node.declaration.name
+            const componentType = declarations.get(name)
+            handelIdentifier({ componentType, path, componentName, state, name })
+          }
+          // class A {} or const A = () => {}
+          // export default connect()(A)
+          if (path.node.declaration.type === 'CallExpression') {
+            if ((path as any).node.declaration.callee.callee.name === 'connect') {
+              const name = (path as any).node.declaration.arguments[0].name
+              const componentType = declarations.get(name)
+              handelIdentifier({ componentType, path, componentName, state, name })
             }
           }
         },
@@ -277,4 +239,69 @@ function defaultJudgePage(filePath: string) {
   // 兼容 windows 路径
   const formatFilePath = filePath.replace(/\\/g, '/')
   return /(package-.+\/)?pages\/.+\/index\.[tj]sx$/.test(formatFilePath)
+}
+
+function handelIdentifier({ componentType, path, componentName, state, name }: any) {
+  if (componentType === 'FunctionExpression' || componentType === 'FunctionDeclaration') {
+    // const A = function (){} or functionA () {}
+    // export default A
+    traverse(path.parent, {
+      FunctionExpression(path) {
+        const mainFnBody = path.node?.body?.body
+        const length = mainFnBody.length
+        const last = mainFnBody[length - 1]
+        insertComponent(last, '' + componentName, state)
+      },
+      FunctionDeclaration(path) {
+        const mainFnBody = path.node?.body?.body
+        const length = mainFnBody.length
+        const last = mainFnBody[length - 1]
+        insertComponent(last, '' + componentName, state)
+      },
+    })
+  } else if (componentType === 'ClassExpression' || componentType === 'ClassDeclaration') {
+    // const A = class {} or class A {}
+    // export default A
+    traverse(path.parent, {
+      ClassMethod(path) {
+        if ((path.node.key as any).name === 'render') {
+          const body = path.node.body.body || []
+          const last = body[body.length - 1]
+          insertComponent(last, '' + componentName, state)
+        }
+      },
+      ClassDeclaration(path) {
+        path.node.body.body.map((cmItem: any) => {
+          if (cmItem.key.name === 'render') {
+            const body = cmItem.body.body || []
+            const last = body[body.length - 1]
+            insertComponent(last, '' + componentName, state)
+          }
+        })
+      },
+    })
+  } else if (componentType === 'ArrowFunctionExpression') {
+    // const A = () => {}
+    // export default A
+    traverse(path.parent, {
+      VariableDeclarator(path) {
+        if (path.node.id.type !== 'Identifier') return
+        if (path.node.init?.type !== 'ArrowFunctionExpression') return
+        // const A = () => {}
+        // export default A
+        if (path.node.init.body.type == 'BlockStatement') {
+          if (name === path.node.id.name) {
+            const mainFnBody = path.node.init.body.body
+            const length = mainFnBody.length
+            const last = mainFnBody[length - 1]
+            insertComponent(last, '' + componentName, state)
+          }
+        } else {
+          // const A = () => <div></div>
+          // export default A
+          insertComponent(path.node.init.body, '' + componentName, state)
+        }
+      },
+    })
+  }
 }

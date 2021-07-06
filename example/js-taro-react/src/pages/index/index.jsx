@@ -1,7 +1,54 @@
-import React, { Component } from 'react';
-import { View } from '@styli/taro';
-import { navigateTo } from '@tarojs/taro';
-import './index.css';
+import React, { Component } from 'react'
+import { View } from '@styli/taro'
+import { navigateTo } from '@tarojs/taro'
+import './index.css'
+
+const data = [
+  {
+    title: 'Class A',
+    path: '/pages/classa/index',
+  },
+  {
+    title: 'Class B',
+    path: '/pages/classb/index',
+  },
+  {
+    title: 'Class C',
+    path: '/pages/classc/index',
+  },
+  {
+    title: 'Function A',
+    path: '/pages/functiona/index',
+  },
+  {
+    title: 'Function B',
+    path: '/pages/functionb/index',
+  },
+  {
+    title: 'Function C',
+    path: '/pages/functionc/index',
+  },
+  {
+    title: 'Arrow Function A',
+    path: '/pages/arrowa/index',
+  },
+  {
+    title: 'Arrow Function b',
+    path: '/pages/arrowb/index',
+  },
+  {
+    title: 'connet class',
+    path: '/pages/connectclass/index',
+  },
+  {
+    title: 'connet function',
+    path: '/pages/connectfunction/index',
+  },
+  {
+    title: 'connet arrow',
+    path: '/pages/connectarrow/index',
+  },
+]
 
 export default class Index extends Component {
   componentWillMount() {}
@@ -16,21 +63,26 @@ export default class Index extends Component {
 
   render() {
     return (
-      <View h-300 center column>
-        <View
-          f-25
-          fontBold
-          w-200
-          h-100
-          red70
-          bgRed10
-          rounded-10
-          center
-          onClick={() => navigateTo({ url: '/package-test/pages/test/index' })}
-        >
-          点击
-        </View>
+      <View h-500 center column pt-260>
+        {data.map((item, index) => (
+          <View
+            key={index}
+            f-25
+            fontBold
+            w-200
+            h-100
+            red70
+            bgRed10
+            p-10
+            rounded-10
+            center
+            mb-10
+            onClick={() => navigateTo({ url: item.path })}
+          >
+            {item.title}
+          </View>
+        ))}
       </View>
-    );
+    )
   }
 }
