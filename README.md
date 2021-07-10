@@ -2,7 +2,7 @@
 
 ## 缘由
 
-众所周知，小程序中不能定义全局组件，如果我们想自定义一个 modal 弹窗，来替代 **wx.showModal** 的话，则需要在每个页面手动的引入组件。随着项目越来越大，手动引入组件无疑是繁琐和低效的，因而抽空开发了这个 webpack-loader 代替手动操作。
+众所周知，小程序中不能定义全局组件，如果我们想自定义一个 modal 弹窗，来替代 **wx.showModal** 的话，则需要在每个页面手动的引入组件。随着项目越来越大，手动引入组件无疑是繁琐和低效的，因而开发了这个 webpack-loader 代替手动操作。
 
 ## 作用
 
@@ -29,11 +29,11 @@ isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` �
 
 ## 语法支持
 
-下面提到的写法中，都支持注入组件。
+下面提到的写法中，都支持注入组件。对于识别为页面，但由于语法不支持，导致注入失败的页面，loader 会在控制台抛出警告，请注意查看。
 
 ```tsx
 // 导出匿名函数
-export default function() {
+export default function () {
   return <View></View>
 }
 
@@ -72,7 +72,7 @@ function A() {
   return <View></View>
 }
 
-const A = function() {
+const A = function () {
   return <View></View>
 }
 
@@ -145,7 +145,7 @@ export default function () {
                 options: {
                   importPath: '@components/BaseComponent',
                   isPage(filePath) {
-                    return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(filePath)
+                    return /(package-.+\/)?pages\/[A-Za-z0-9-]+\/index\.[tj]sx\$/.test(filePath)
                   }
                 },
               },
@@ -204,7 +204,7 @@ loader 不支持高阶组件的代码注入
 
 ```tsx
 const connect = () => {
-  return CComponent => CComponent
+  return (CComponent) => CComponent
 }
 
 const CustomComponent = () => {
@@ -218,7 +218,7 @@ export default memo(connect()(CustomComponent))
 
 ```tsx
 const connect = () => {
-  return CComponent => CComponent
+  return (CComponent) => CComponent
 }
 
 const CustomComponent = () => {
@@ -227,7 +227,7 @@ const CustomComponent = () => {
 
 const HigherComponent = memo(connect()(CustomComponent))
 
-export default props => {
+export default (props) => {
   return (
     <View>
       <HigherComponent {...props} />
