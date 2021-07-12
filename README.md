@@ -145,7 +145,9 @@ export default function () {
                 options: {
                   importPath: '@components/BaseComponent',
                   isPage(filePath) {
-                    return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(filePath)
+                    // 兼容 windows
+                    const formatFilePath = filePath.replace(/\\/g, '/')
+                    return /(package-.+\/)?pages\/.+\/index\.tsx$/.test(formatFilePath)
                   }
                 },
               },
