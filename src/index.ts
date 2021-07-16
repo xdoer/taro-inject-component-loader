@@ -59,7 +59,7 @@ export default function (source: string) {
         if (path.parent.type !== 'Program') return
 
         const type = path.node.type
-        const name = path.node.id.name || 'anonymous-class'
+        const name = path.node.id.name
         declarations.set(name, type)
       },
 
@@ -69,7 +69,9 @@ export default function (source: string) {
         if (path.parent.type !== 'Program') return
 
         const type = path.node.type
-        const name = path.node.id?.name || 'anonymous-function'
+        const name = path.node.id?.name
+        if (!name) return
+
         declarations.set(name, type)
       },
 
@@ -170,67 +172,66 @@ export default function (source: string) {
             const name = path.node.declaration.name
             const componentType = declarations.get(name)
 
-            // const A = function (){}
-            // export default A
-
-            // function A(){}
-            // export default A
-            if (['FunctionDeclaration', 'FunctionExpression'].includes(componentType)) {
-              traverse(path.parent, {
-                FunctionExpression(path) {
-                  const mainFnBody = path.node?.body?.body
-                  const length = mainFnBody.length
-                  const last = mainFnBody[length - 1]
-                  insertComponent(last, '' + componentName, state)
-                },
-                FunctionDeclaration(path) {
-                  const mainFnBody = path.node?.body?.body
-                  const length = mainFnBody.length
-                  const last = mainFnBody[length - 1]
-                  insertComponent(last, '' + componentName, state)
-                },
-              })
-            }
-
-            // const A = class {}
-            // export default A
-
-            // class A {}
-            // export default A
-            if (['ClassExpression', 'ClassDeclaration'].includes(componentType)) {
-              traverse(path.parent, {
-                ClassMethod(path) {
-                  if ((path.node.key as any).name === 'render') {
+            traverse(path.parent, {
+              FunctionDeclaration(path) {
+                if (path.node.id?.name !== name) return
+                const mainFnBody = path.node?.body?.body
+                const length = mainFnBody.length
+                const last = mainFnBody[length - 1]
+                insertComponent(last, '' + componentName, state)
+              },
+              ClassDeclaration(path) {
+                if (path.node.id.name !== name) return
+                traverse(path.node, {
+                  ClassMethod(path) {
+                    if ((path.node.key as any)?.name !== 'render') return
                     const body = path.node.body.body || []
                     const last = body[body.length - 1]
                     insertComponent(last, '' + componentName, state)
-                  }
-                },
-              })
-            }
+                  },
+                }, path.scope, path)
+              },
+              VariableDeclarator(path) {
+                if (path.node.id.type !== 'Identifier') return
+                if (path.node.id.name !== name) return
+                if (!path.node.init) return
 
-            if (componentType === 'ArrowFunctionExpression') {
-              traverse(path.parent, {
-                VariableDeclarator(path) {
-                  if (path.node.id.type !== 'Identifier') return
-                  if (path.node.init?.type !== 'ArrowFunctionExpression') return
+                if (path.node.init.type !== componentType) return
+
+                if (path.node.init.type === 'FunctionExpression') {
+                  const mainFnBody = path.node.init.body.body
+                  const length = mainFnBody.length
+                  const last = mainFnBody[length - 1]
+                  insertComponent(last, '' + componentName, state)
+                }
+
+                if (path.node.init.type === 'ClassExpression') {
+                  traverse(path.node, {
+                    ClassMethod(path) {
+                      if ((path.node.key as any).name !== 'render') return
+                      const body = path.node.body.body || []
+                      const last = body[body.length - 1]
+                      insertComponent(last, '' + componentName, state)
+                    },
+                  }, path.scope, path)
+                }
+
+                if (path.node.init.type === 'ArrowFunctionExpression') {
                   // const A = () => {}
                   // export default A
                   if (path.node.init.body.type == 'BlockStatement') {
-                    if (name === path.node.id.name) {
-                      const mainFnBody = path.node.init.body.body
-                      const length = mainFnBody.length
-                      const last = mainFnBody[length - 1]
-                      insertComponent(last, '' + componentName, state)
-                    }
+                    const mainFnBody = path.node.init.body.body
+                    const length = mainFnBody.length
+                    const last = mainFnBody[length - 1]
+                    insertComponent(last, '' + componentName, state)
                   } else {
                     // const A = () => <div></div>
                     // export default A
                     insertComponent(path.node.init.body, '' + componentName, state)
                   }
-                },
-              })
-            }
+                }
+              }
+            })
           }
         },
       })
