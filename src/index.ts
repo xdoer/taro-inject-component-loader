@@ -81,22 +81,23 @@ export default function (source: string) {
         if (path.parent.type !== 'Program') return
 
         path.node.declarations.forEach((declaration: any) => {
+
           // const a = () => {}
-          if (declaration.init.type === 'ArrowFunctionExpression') {
+          if (declaration.init?.type === 'ArrowFunctionExpression') {
             const type = declaration.init?.type
             const name = declaration.id?.name
             declarations.set(name, type)
           }
 
           // const a = function(){}
-          if (declaration.init.type === 'FunctionExpression') {
+          if (declaration.init?.type === 'FunctionExpression') {
             const type = declaration.init.type
             const name = declaration.id.name
             declarations.set(name, type)
           }
 
           // const a = class {}
-          if (declaration.init.type === 'ClassExpression') {
+          if (declaration.init?.type === 'ClassExpression') {
             const type = declaration.init.type
             const name = declaration.id.name
             declarations.set(name, type)
