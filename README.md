@@ -18,6 +18,35 @@
 
 ## 配置
 
+### Webpack 配置
+
+```ts
+  webpackChain(chain) {
+    chain.merge({
+      module: {
+        rule: {
+          injectBaseComponentLoader: {
+            test: /\.tsx$/,
+            use: [
+              {
+                loader: 'taro-inject-component-loader',
+                options: {
+                  importPath: '@components/BaseComponent',
+                  isPage(filePath) {
+                    // 兼容 windows
+                    const formatFilePath = filePath.replace(/\\/g, '/')
+                    return /(package-.+\/)?pages\/[A-Za-z0-9-]+\/index\.[tj]sx\$/.test(filePath)
+                  }
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+  },
+```
+
 ### 配置项
 
 | 字段       | 必填 | 默认                                                                        | 含义                   |
@@ -26,6 +55,51 @@
 | isPage     | 否   | (path) => /(package-.+\/)?pages\/[A-Za-z0-9-]+\/index\.[tj]sx\$/.test(path) | 判断当前文件是不是页面 |
 
 isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` 和 `src/package-模块名称/pages/页面名称/index.[tj]sx` 这两种情形下的文件识别为页面。
+
+## 效果
+
+### 源代码
+
+页面组件
+
+```tsx
+<!----src/pages/index.tsx----->
+import { View } from '@taro/components'
+
+export default function Index() {
+  return <View>哈哈哈哈哈</View>
+}
+```
+
+要注入的组件
+
+```tsx
+<!----src/components/BaseComponent.tsx----->
+import { View } from '@taro/components'
+
+export default function () {
+  return <View>WebpackInject</View>
+}
+```
+
+### 注入后的代码
+
+会自动注入为页面根节点的最后一个子元素
+
+```tsx
+<!----src/pages/index.tsx----->
+import { View } from '@taro/components'
+import WebpackInject from '@components/BaseComponent'
+
+export default function Index() {
+  return (
+    <View>
+      哈哈哈哈哈
+      <WebpackInject />
+    </View>
+  )
+}
+```
 
 ## 语法支持
 
@@ -102,79 +176,6 @@ const A = class extends Component {
 }
 
 export default A
-```
-
-## 效果
-
-### 源代码
-
-页面组件
-
-```tsx
-<!----src/pages/index.tsx----->
-import { View } from '@taro/components'
-
-export default function Index() {
-  return <View>哈哈哈哈哈</View>
-}
-```
-
-要注入的组件
-
-```tsx
-<!----src/components/BaseComponent.tsx----->
-import { View } from '@taro/components'
-
-export default function () {
-  return <View>WebpackInject</View>
-}
-```
-
-### 进行配置
-
-```ts
-  webpackChain(chain) {
-    chain.merge({
-      module: {
-        rule: {
-          injectBaseComponentLoader: {
-            test: /\.tsx$/,
-            use: [
-              {
-                loader: 'taro-inject-component-loader',
-                options: {
-                  importPath: '@components/BaseComponent',
-                  isPage(filePath) {
-                    // 兼容 windows
-                    const formatFilePath = filePath.replace(/\\/g, '/')
-                    return /(package-.+\/)?pages\/[A-Za-z0-9-]+\/index\.[tj]sx\$/.test(filePath)
-                  }
-                },
-              },
-            ],
-          },
-        },
-      },
-    });
-  },
-```
-
-### 注入后的代码
-
-会自动注入为页面根节点的最后一个子元素
-
-```tsx
-import { View } from '@taro/components'
-import WebpackInject from '@components/BaseComponent'
-
-export default function Index() {
-  return (
-    <View>
-      哈哈哈哈哈
-      <WebpackInject />
-    </View>
-  )
-}
 ```
 
 ## 注意事项
