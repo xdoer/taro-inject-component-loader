@@ -30,6 +30,7 @@
             use: [
               {
                 loader: 'taro-inject-component-loader',
+                logError: true,
                 options: {
                   importPath: '@components/BaseComponent',
                   isPage(filePath) {
@@ -52,6 +53,7 @@
 | 字段       | 必填 | 默认                                                                        | 含义                   |
 | ---------- | ---- | --------------------------------------------------------------------------- | ---------------------- |
 | importPath | 是   | 无                                                                          | 导入路径               |
+| logError   | 否   | true                                                                        | 控制台打印错误         |
 | isPage     | 否   | (path) => /(package-.+\/)?pages\/[A-Za-z0-9-]+\/index\.[tj]sx\$/.test(path) | 判断当前文件是不是页面 |
 
 isPage 不传的情况下，默认会将 `src/pages/页面名称/index.[tj]sx` 和 `src/package-模块名称/pages/页面名称/index.[tj]sx` 这两种情形下的文件识别为页面。

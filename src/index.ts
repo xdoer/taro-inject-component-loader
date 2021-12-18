@@ -11,6 +11,9 @@ const schema = {
     importPath: {
       type: 'string',
     },
+    logError: {
+      type: 'boolean'
+    },
     isPage: {
       instanceof: 'Function',
     },
@@ -26,7 +29,7 @@ export default function (source: string) {
 
   validate(schema as any, options, { name: 'taro-inject-component-loader' })
 
-  const { importPath = '', componentName = 'WebpackInjected', isPage = defaultJudgePage } = options || {}
+  const { importPath = '', componentName = 'WebpackInjected', logError = true, isPage = defaultJudgePage } = options || {}
 
   // 获取原始文件地址
   const filePath = webpackEnv.resourcePath
@@ -237,11 +240,11 @@ export default function (source: string) {
         },
       })
 
-      if (!state.importedComponent) {
+      if (!state.importedComponent && logError) {
         webpackEnv.emitWarning(`页面: ${filePath} 注入组件失败，建议手动引入组件。组件注入限制请查阅: https://github.com/xdoer/taro-inject-component-loader`)
 
       }
-      if (!state.importedDeclaration) {
+      if (!state.importedDeclaration && logError) {
         webpackEnv.emitWarning(`页面: ${filePath} 注入导入申明失败，建议手动引入组件。组件注入限制请查阅: https://github.com/xdoer/taro-inject-component-loader`)
       }
 
