@@ -234,56 +234,10 @@ const HigherComponent = memo(connect()(CustomComponent))
 
 export default props => {
   return (
-    <View>
+    <Block>
       <HigherComponent {...props} />
-    </View>
+    </Block>
   )
-}
-```
-
-### Provider
-
-Provider 不能作为根节点组件
-
-```tsx
-export default () => {
-  return (
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
-  )
-}
-```
-
-loader 默认会将要注入的组件，注入到 App 组件的同级位置上，导致一些 Bug
-
-```tsx
-export default () => {
-  return (
-    <ThemeProvider>
-      <App />
-      <WebpackInject /> // 代码出错
-    </ThemeProvider>
-  )
-}
-```
-
-建议手动引入组件，或者更改代码：
-
-```tsx
-const Wrapper = ({ children }) => {
-  return (
-    <ThemeProvider>
-      <View>
-        <App />
-        {children}
-      </View>
-    </ThemeProvider>
-  )
-}
-
-export default () => {
-  return <Wrapper></Wrapper>
 }
 ```
 
@@ -299,9 +253,9 @@ export default () => <Button />
 
 ```tsx
 export default () => (
-  <View>
+  <Block>
     <Button />
-  </View>
+  </Block>
 )
 ```
 
@@ -327,12 +281,12 @@ export default () => (
 ```tsx
 export default () => (
   return (
-    <View>
+    <Block>
       <ThemeProvider>
         <App />
       </ThemeProvider>
       <Button>点击</Button>
-    </View>
+    </Block>
   )
 )
 ```
