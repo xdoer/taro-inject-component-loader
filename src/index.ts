@@ -272,6 +272,15 @@ function createJSX(name: string) {
   )
 }
 
+function wrapJSX(name: string, temp: any) {
+  return utils.jSXElement(
+    utils.jSXOpeningElement(utils.jsxIdentifier('' + name), [], false),
+    utils.jSXClosingElement(utils.jsxIdentifier('' + name)),
+    [temp],
+    false,
+  )
+}
+
 function insertComponent(node: any, componentName: string, state: any) {
   if (node?.type === 'ReturnStatement') {
     // createElement
@@ -283,7 +292,9 @@ function insertComponent(node: any, componentName: string, state: any) {
     // JSX
     if (node.argument?.type === 'JSXElement' && !state.importedComponent) {
       state.importedComponent = true
-      node.argument.children.push(createJSX(componentName))
+      //  @caiminchao 开源方案，只修改了这个方法，就是将node.argument塞入import的组件children的位置
+      const temp = node.argument;
+      node.argument = wrapJSX(componentName, temp);
     }
   }
   if (node.type === 'JSXElement' && !state.importedComponent) {
